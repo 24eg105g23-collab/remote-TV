@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TV Remote</title>
+<style>
+body{margin:0;height:100vh;display:flex;justify-content:center;align-items:center;background:#bdbdbd;font-family:Arial,sans-serif}
+.remote{width:220px;background:#111;border-radius:40px;padding:15px;box-shadow:0 10px 25px rgba(0,0,0,.5)}
+button{border:none;cursor:pointer;color:#fff;background:#333}
+.power{width:45px;height:45px;border-radius:50%;color:red;font-size:24px;display:block;margin:auto}
+.numbers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.numbers button{height:40px;border-radius:20px;font-size:18px}
+.controls{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:15px}
+.controls button{height:45px;border-radius:20px}
+.home-row{display:flex;justify-content:space-between;margin:15px 0}
+.home-row button{width:80px;height:40px;border-radius:20px}
+.nav-ring{width:130px;height:130px;margin:15px auto;border-radius:50%;background:#222;position:relative}
+.center{position:absolute;top:40px;left:40px;width:50px;height:50px;border-radius:50%;background:#555;display:flex;justify-content:center;align-items:center;color:white;font-weight:bold}
+.bottom{display:flex;justify-content:space-between}
+.bottom button{width:80px;height:40px;border-radius:20px}
+.apps{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:15px}
+.apps button{height:35px;border-radius:8px;background:#222}
+.netflix{color:red;font-weight:bold}
+.brand{text-align:center;color:white;font-size:28px;letter-spacing:3px;margin-top:20px}
+button:hover{background:#555}
+</style>
+</head>
+<body>
+<div class="remote">
+<button class="power" data-command="power">⏻</button>
+<div class="numbers">
+<button data-command="1">1</button><button data-command="2">2</button><button data-command="3">3</button>
+<button data-command="4">4</button><button data-command="5">5</button><button data-command="6">6</button>
+<button data-command="7">7</button><button data-command="8">8</button><button data-command="9">9</button>
+<button data-command="mute">-M</button><button data-command="0">0</button><button data-command="repeat">REP</button>
+</div>
+<div class="controls">
+<button data-command="vol_up">+</button>
+<button data-command="mute">🔇</button>
+<button data-command="up">▲</button>
+<button data-command="vol_down">−</button>
+<button data-command="menu">☰</button>
+<button data-command="down">▼</button>
+</div>
+<div class="home-row">
+<button data-command="home">⌂</button>
+<button data-command="input">INPUT</button>
+</div>
+<div class="nav-ring">
+<div class="center" data-command="ok">OK</div>
+</div>
+<div class="bottom">
+<button data-command="exit">EXIT</button>
+<button data-command="settings">⚙</button>
+</div>
+<div class="apps">
+<button class="netflix" data-command="netflix">NETFLIX</button>
+<button data-command="prime">Prime Video</button>
+<button data-command="hotstar">Hotstar</button>
+<button data-command="youtube">YouTube</button>
+<button data-command="miracast">Miracast</button>
+<button data-command="app_store">App Store</button>
+</div>
+<div class="brand">CELLECOR</div>
+<div id="status" style="margin-top:10px;color:#fff;text-align:center;font-size:12px;">Waiting for backend…</div>
+</div>
+<script>
+const statusEl = document.getElementById('status');
+const apiBase = window.location.protocol === 'file:' ? 'http://127.0.0.1:8000' : window.location.origin;
+
+async function sendCommand(command) {
+  statusEl.textContent = `Sending ${command}...`;
+  try {
+    const response = await fetch(`${apiBase}/api/command`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({command})});
+    const result = await response.json();
+    statusEl.textContent = result.message || 'Command sent';
+  } catch (error) {
+    statusEl.textContent = 'Backend unavailable';
+    console.error(error);
+  }
+}
+
+(async function initStatus() {
+  try {
+    const response = await fetch(`${apiBase}/api/info`);
+    const info = await response.json();
+    if (info.localUrl) {
+      statusEl.textContent = `Open ${info.localUrl} on another device`;
+    }
+  } catch (error) {
+    statusEl.textContent = 'Ready to send commands';
+  }
+})();
+
+document.querySelectorAll('button, .center').forEach((el) => {
+  const command = el.getAttribute('data-command');
+  if (!command) return;
+  el.addEventListener('click', () => sendCommand(command));
+});
+</script>
+</body>
+</html>
